@@ -1,4 +1,4 @@
-# next-api-gen
+# next-endpoints
 
 ## “Never write a fetch call again.”
 
@@ -19,18 +19,18 @@ this tool takes care of the boilerplate: REST endpoints + fully typed client fun
 
 ### 📦 Installation
 
-`npm install --save-dev next-api-gen`
+`npm install --save-dev next-endpoints`
 
 - Or run directly with npx:
 
-`npx next-api-gen generate`
+`npx next-endpoints generate`
 
 ### 🛠 Usage
 
 1. Annotate your class
 
 ```typescript
-import {ApiMethod, Endpoint} from "next-api-gen/types";
+import {ApiMethod, Endpoint} from "next-endpoints/types";
 
 @Endpoint()
 export class HomeEndpoint {
@@ -42,7 +42,7 @@ export class HomeEndpoint {
 ```
 
 2. Run the generator
-   npx next-api-gen generate
+   npx next-endpoints generate
 
 This will create:
 
@@ -62,11 +62,11 @@ console.log(names); // ["Alice", "Bob", "Charlie"]
 
 ### ⚙️ Configuration
 
-Add a next-api-gen section to your package.json (optional):
+Add a next-endpoints section to your package.json (optional):
 
 ```json
 {
-  "next-api-gen": {
+  "next-endpoints": {
     "outDir": "lib/api-client"
   }
 }

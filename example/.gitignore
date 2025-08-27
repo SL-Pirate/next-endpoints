@@ -40,5 +40,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# next-api-gen generated files
-
+# next-endpoints generated files
+app/api/generated/
+lib/api/generated/

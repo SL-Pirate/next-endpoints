@@ -13,7 +13,7 @@ export async function generateApiClient(args: {
   }
 
   const outDir =
-    config["next-api-gen"]?.outDir ||
+    config["next-endpoints"]?.outDir ||
     path.resolve(process.cwd(), "lib/api-client/generated");
   const outputPath = path.resolve(outDir, `${args.klass.getName()}.ts`);
 
@@ -21,7 +21,7 @@ export async function generateApiClient(args: {
 
   args.src
     .getImportDeclarations()
-    .filter((def) => !def.getModuleSpecifierValue().includes("next-api-gen"))
+    .filter((def) => !def.getModuleSpecifierValue().includes("next-endpoints"))
     .forEach((def) => {
       src.addImportDeclaration({
         namedImports: def.getNamedImports().map((ni) => ni.getText()),

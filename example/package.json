@@ -7,7 +7,7 @@
     "build": "next build --turbopack",
     "start": "next start"
   },
-  "next-api-gen": {
+  "next-endpoints": {
     "outDir": "lib/api/generated",
     "apiPrefix": "api/generated"
   },
@@ -17,7 +17,7 @@
     "react-dom": "19.1.0"
   },
   "devDependencies": {
-    "next-api-gen": "link:..",
+    "next-endpoints": "link:..",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

@@ -1,7 +1,7 @@
 import { readFileSync } from "fs";
 
 function readConfig(): {
-  "next-api-gen"?: {
+  "next-endpoints"?: {
     outDir?: string;
     apiPrefix?: string;
   };

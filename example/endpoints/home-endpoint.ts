@@ -1,4 +1,4 @@
-import { ApiMethod, Endpoint } from "next-api-gen/types";
+import { ApiMethod, Endpoint } from "next-endpoints/types";
 
 @Endpoint()
 export class HomeEndpoint {
