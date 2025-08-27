@@ -78,6 +78,21 @@ Add a next-api-gen section to your package.json (optional):
 
 - API clients → /lib/api-client
 
+### ⚠️ Disclaimer: Experimental Project
+
+This library is in early preview (v0.x).
+APIs, file layouts, and generated code are likely to change as the project evolves.
+
+Expect breaking changes between minor versions.
+
+Only arrow-function-style class properties are supported right now (not methods).
+
+Import rewriting is basic and may not handle all edge cases.
+
+Generated code is intended for exploration and prototyping, not production-critical use (yet).
+
+👉 If you’re interested, please try it out, open issues, and share feedback! Early adopters will help shape the design.
+
 ### 🧩 Roadmap
 
 - Generate API routes for annotated classes
