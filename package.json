@@ -1,0 +1,28 @@
+{
+  "name": "next-api-gen",
+  "version": "1.0.0",
+  "description": "Never write a fetch call again",
+  "license": "MIT",
+  "author": "Isira Herath",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "tsc && cd example && npx next-api-gen generate"
+  },
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./types": "./dist/types.js"
+  },
+  "bin": {
+    "next-api-gen": "./dist/cli.js"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0"
+  },
+  "dependencies": {
+    "next": "^15.5.2",
+    "ts-morph": "^26.0.0"
+  }
+}
