@@ -6,6 +6,7 @@
   "author": "Isira Herath",
   "type": "module",
   "main": "dist/index.js",
+  "repository": "https://github.com/SL-Pirate/next-endpoints",
   "scripts": {
     "build": "tsc",
     "test": "tsc && cd example && npx next-endpoints generate"
