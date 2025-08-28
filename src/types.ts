@@ -4,4 +4,14 @@ export function Endpoint(): ClassDecorator {
   return (target) => {};
 }
 
-export type ApiMethod<Inp extends object | Array<any> | string | number , Ret> = (args: Inp, req: NextRequest) => Promise<Ret>;
+export type ApiMethod<
+  Inp extends object | Array<any> | string | number | boolean | void,
+  Ret extends
+    | object
+    | Array<any>
+    | string
+    | number
+    | void
+    | ReadableStream<string | number | boolean | object | Array<any>>
+    | Buffer,
+> = (args: Inp, req: NextRequest) => Promise<Ret>;

@@ -2,6 +2,28 @@
 
 import { useEffect, useState } from "react";
 
+interface ITypeWithArgs<I, T> {
+  call: (args: I, headers: Record<string, string>) => Promise<T>;
+  args: I;
+  deps: any[];
+  headers?: Record<string, string>;
+}
+
+interface ITypeWithoutArgs<T> {
+  call: (headers: Record<string, string>) => Promise<T>;
+  deps: any[];
+  headers?: Record<string, string>;
+}
+
+interface IReturnType<T> {
+  data: T | null;
+  error: Error | null;
+  loading: boolean;
+}
+
+export function useApiClient<I, T>(props: ITypeWithArgs<I, T>): IReturnType<T>;
+export function useApiClient<I, T>(props: ITypeWithoutArgs<T>): IReturnType<T>;
+
 /**
  * useApiClient
  *
@@ -39,12 +61,9 @@ import { useEffect, useState } from "react";
  *   headers: { Authorization: `Bearer ${token}` }
  * });
  */
-export function useApiClient<I, T>(props: {
-  call: (args: I, headers: Record<string, string>) => Promise<T>;
-  args: I;
-  deps: any[];
-  headers?: Record<string, string>;
-}): {
+export function useApiClient<I, T>(
+  props: ITypeWithArgs<I, T> | ITypeWithoutArgs<T>,
+): {
   data: T | null;
   error: Error | null;
   loading: boolean;
@@ -57,8 +76,14 @@ export function useApiClient<I, T>(props: {
     let cancelled = false; // prevent race conditions + unmounted state updates
     setLoading(true);
 
-    props
-      .call(props.args, props.headers ?? {})
+    let res: Promise<T>;
+    if ("args" in props) {
+      res = props.call(props.args, props.headers ?? {});
+    } else {
+      res = props.call(props.headers ?? {});
+    }
+
+    res
       .then((res) => {
         if (!cancelled) {
           setData(res);

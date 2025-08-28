@@ -36,36 +36,100 @@ export async function generateApiClient(args: {
 
         const inputType = arrowFunc?.getParameters()[0]?.getType();
 
-        if (!inputType) {
-          throw new Error(
-            `Could not determine input type for method ${prop.getName()} in class ${args.klass.getName()}`,
-          );
-        }
-
         let contentTypeHeader: string;
         let body: string;
-        if (inputType.isString()) {
+
+        if (!inputType) {
+          contentTypeHeader = "text/plain";
+          body = '""';
+        } else if (inputType.isString()) {
           contentTypeHeader = "text/plain";
           body = "args";
+        } else if (inputType.isVoid()) {
+          contentTypeHeader = "text/plain";
+          body = '""';
         } else {
           contentTypeHeader = "application/json";
           body = "JSON.stringify(args)";
         }
 
+        function getReturn() {
+          const returnType = arrowFunc?.getReturnType().getTypeArguments()[0];
+          if (!returnType) {
+            return "Promise<any>";
+          } else if (returnType.isVoid()) {
+            return "";
+          } else if (returnType.getText().includes("ReadableStream")) {
+            function getParseFunction(): string {
+              const dataType = returnType?.getTypeArguments()[0]?.getText();
+              return `
+                function parseFunction(chunk: string): ${dataType} {
+                  if (${dataType === "string"}) {
+                    return chunk;
+                  } else if (${dataType === "number"}) {
+                    return Number(chunk);
+                  } else if (${dataType === "boolean"}) {
+                    return chunk === "true";
+                  } else {
+                    return JSON.parse(chunk);
+                  }
+                }
+              `;
+            }
+
+            return `
+            return new ReadableStream({
+              async start(controller) {
+                const reader = res.body!.getReader();
+                const decoder = new TextDecoder();
+    
+                ${getParseFunction()}
+                
+                while (true) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
+                  
+                  try {
+                    const decoded = decoder.decode(value);
+                    
+                    const parsed = parseFunction(decoded.replace("data: ", "").trim());
+                   
+                    controller.enqueue(parsed); 
+                  } catch (err) {
+                    controller.error(err);
+                    break;
+                  }
+                }
+                
+                controller.close();
+              }
+            });
+            `;
+          } else {
+            return "return res.json()";
+          }
+        }
+
+        const params = [
+          {
+            name: "args",
+            type: arrowFunc?.getParameters()[0]?.getType().getText()!,
+          },
+          {
+            name: "headers",
+            type: "Record<string, string>",
+            hasQuestionToken: true,
+          },
+        ];
+
+        if (!inputType || inputType.isVoid()) {
+          params.shift();
+        }
+
         return {
           name: prop.getName(),
           isAsync: true,
-          parameters: [
-            {
-              name: "args",
-              type: arrowFunc?.getParameters()[0]!.getType().getText()!,
-            },
-            {
-              name: "headers",
-              type: "Record<string, string>",
-              hasQuestionToken: true,
-            },
-          ],
+          parameters: params,
           returnType: arrowFunc?.getReturnType()?.getText() || "Promise<any>",
           isStatic: true,
           statements: `
@@ -84,7 +148,7 @@ export async function generateApiClient(args: {
             throw new Error(JSON.stringify(await res.json()));
           }
           
-          return res.json();
+          ${getReturn()}
       `,
         };
       }),

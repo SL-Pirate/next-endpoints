@@ -5,10 +5,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
         try {
           const body = await req.json();
-          const result = await new HomeEndpoint().getNames(
-            body,
-            req as any
-          );
+          const result = await new HomeEndpoint().getNames(body, req as any);
+          
           return NextResponse.json(result);
         } catch (err) {
         const message =

@@ -5,6 +5,7 @@ import { HomeEndpointClient } from "@/lib/api/generated/HomeEndpoint";
 import { useApiClient } from "next-endpoints/hooks/use-api-client";
 import { useEffect, useState } from "react";
 import { TestEndpointClient } from "@/lib/api/generated/TestEndpoint";
+import { ExoticEndpointsClient } from "@/lib/api/generated/ExoticEndpoints";
 
 export default function Home() {
   return (
@@ -14,6 +15,8 @@ export default function Home() {
         <CreateFileComponent />
         <TestComponent />
         <Test2Component />
+        <GhostComponent />
+        <CounterComponent />
         <Image
           className="dark:invert"
           src="/next.svg"
@@ -181,4 +184,52 @@ function Test2Component() {
   if (!data) return <p>No response from testNo2.</p>;
 
   return <p>testNo2 response: {data.result}</p>;
+}
+
+function GhostComponent() {
+  const { loading } = useApiClient({
+    call: ExoticEndpointsClient.ghostMethod,
+    deps: [],
+  });
+
+  return (
+    <div>{loading ? "Loading ghost method..." : "Ghost method completed."}</div>
+  );
+}
+
+function CounterComponent() {
+  const { loading, error, data } = useApiClient({
+    call: ExoticEndpointsClient.getEventStream,
+    deps: [],
+  });
+
+  const [value, setValue] = useState(0);
+
+  useEffect(() => {
+    if (!data) return;
+
+    const reader = data.getReader();
+
+    let cancelled = false;
+
+    async function pump() {
+      while (!cancelled) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        setValue(value.count);
+      }
+    }
+
+    pump();
+
+    return () => {
+      cancelled = true;
+      reader.cancel().catch(() => {});
+    };
+  }, [data]);
+
+  if (loading) return <p>Loading event stream...</p>;
+  if (error) return <p>Error loading event stream: {error.message}</p>;
+
+  return <p>Streamed value: {value}</p>;
 }

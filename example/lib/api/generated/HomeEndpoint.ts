@@ -16,7 +16,7 @@ export class HomeEndpointClient {
                     throw new Error(JSON.stringify(await res.json()));
                   }
                   
-                  return res.json();
+                  return res.json()
               
     }
 
@@ -37,7 +37,7 @@ export class HomeEndpointClient {
                     throw new Error(JSON.stringify(await res.json()));
                   }
                   
-                  return res.json();
+                  return res.json()
               
     }
 }

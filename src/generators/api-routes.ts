@@ -54,18 +54,71 @@ export async function generateApiRoute(args: {
   }
 
   const inputType = arrowFunc?.getParameters()[0]?.getType();
+  const outputType = arrowFunc?.getReturnType().getTypeArguments()[0];
 
-  if (!inputType) {
-    throw new Error(
-      `Could not determine input type for method ${args.prop.getName()} in class ${args.klass.getName()}`,
-    );
+  function getApiResponseStatement() {
+    if (outputType?.isString()) {
+      return "return new NextResponse(result)";
+    } else if (outputType?.getText().includes("ReadableStream")) {
+      return `
+        function toString(chunk: string | number | boolean | object | Array<any> ): string {
+          if (typeof chunk === "string") {
+            return chunk;
+          } else if (typeof chunk === "number" || typeof chunk === "boolean") {
+            return chunk.toString();
+          } else {
+            return JSON.stringify(chunk);
+          }
+        }
+      
+        return new NextResponse(result.pipeThrough(
+              new TransformStream({
+                transform: (chunk, controller) => controller.enqueue("data: " + toString(chunk) + "\\n\\n")
+              })
+            ), {
+          headers: {
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+          },
+        })
+      `;
+    } else if (outputType?.getText().includes("Buffer")) {
+      return `
+        return new NextResponse(result, {
+          headers: {
+            "Content-Type": "application/octet-stream",
+            "Content-Length": result.length.toString(),
+          },
+        })
+      `;
+    } else if (
+      outputType?.isNumber() ||
+      outputType?.isBoolean() ||
+      outputType?.isObject() ||
+      outputType?.isArray()
+    ) {
+      return "return NextResponse.json(result)";
+    } else if (outputType?.isVoid()) {
+      return "return new NextResponse(null, { status: 204 })";
+    }
   }
 
   let body: string;
-  if (inputType.isString()) {
+  if (!inputType || inputType.isString() || inputType.isVoid()) {
     body = "await req.text()";
   } else {
     body = "await req.json()";
+  }
+
+  function getArgsForEndpoint() {
+    if (!inputType) {
+      return "(undefined, req as any)";
+    } else if (inputType.isVoid()) {
+      return "(void, req as any)";
+    } else {
+      return "(body, req as any)";
+    }
   }
 
   src.addFunction({
@@ -77,11 +130,9 @@ export async function generateApiRoute(args: {
     statements: `
     try {
       const body = ${body};
-      const result = await new ${args.klass.getName()}().${args.prop.getName()}(
-        body,
-        req as any
-      );
-      return NextResponse.json(result);
+      const result = await new ${args.klass.getName()}().${args.prop.getName()}${getArgsForEndpoint()};
+      
+      ${getApiResponseStatement()};
     } catch (err) {
     const message =
     err instanceof Error
