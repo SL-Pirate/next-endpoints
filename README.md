@@ -78,6 +78,47 @@ Add a next-endpoints section to your package.json (optional):
 
 - API clients → /lib/api-client
 
+### ✨ Optional React Hook
+
+For convenience, we provide a simple React hook useApiClient to wrap your API client calls with built-in loading, error,
+and data state management.
+
+```tsx
+import {HomeEndpointClient} from "@/lib/api/generated/HomeEndpoint";
+import {useApiClient} from "next-endpoints/hooks/use-api-client";
+
+function NameListComponent() {
+    const {data, error, loading} = useApiClient({
+        call: HomeEndpointClient.getNames,
+        args: {},
+        deps: [],
+        headers: {"hello-header": "hello-header-value"},
+    });
+
+    if (loading) return <p>Loading names...</p>;
+    if (error) return <p>Error loading names: {error.message}</p>;
+    if (!data) return <p>No names found.</p>;
+
+    return (
+        <div className="text-center sm:text-left">
+            <h2 className="text-2xl font-semibold">Names from API:</h2>
+            <ul className="mt-2 space-y-1">
+                {data.map((name, index) => (
+                    <li key={index} className="text-lg">
+                        {name}
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+}
+```
+
+> Note: This hook is optional and minimal. For more advanced features like caching or retries, consider integrating your
+> API client with React Query
+> or SWR
+> .
+
 ### ⚠️ Disclaimer: Experimental Project
 
 This library is in early preview (v0.x).

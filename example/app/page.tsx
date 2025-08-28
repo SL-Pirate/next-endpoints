@@ -1,36 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState } from "react";
 import { HomeEndpointClient } from "@/lib/api/generated/HomeEndpoint";
+import { useApiClient } from "next-endpoints/hooks/use-api-client";
 
 export default function Home() {
-  const [names, setNames] = useState<Array<string>>();
-
-  useEffect(() => {
-    HomeEndpointClient.getNames(
-      {},
-      {
-        "test-header": "Hello from the client",
-      },
-    ).then(setNames);
-  }, []);
-
   return (
     <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        {names && (
-          <div className="text-center sm:text-left">
-            <h2 className="text-2xl font-semibold">Names from API:</h2>
-            <ul className="mt-2 space-y-1">
-              {names.map((name, index) => (
-                <li key={index} className="text-lg">
-                  {name}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        <NameListComponent />
         <Image
           className="dark:invert"
           src="/next.svg"
@@ -125,6 +103,32 @@ export default function Home() {
           Go to nextjs.org →
         </a>
       </footer>
+    </div>
+  );
+}
+
+function NameListComponent() {
+  const { data, error, loading } = useApiClient({
+    call: HomeEndpointClient.getNames,
+    args: {},
+    deps: [],
+    headers: { "hello-header": "hello-header-value" },
+  });
+
+  if (loading) return <p>Loading names...</p>;
+  if (error) return <p>Error loading names: {error.message}</p>;
+  if (!data) return <p>No names found.</p>;
+
+  return (
+    <div className="text-center sm:text-left">
+      <h2 className="text-2xl font-semibold">Names from API:</h2>
+      <ul className="mt-2 space-y-1">
+        {data.map((name, index) => (
+          <li key={index} className="text-lg">
+            {name}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
