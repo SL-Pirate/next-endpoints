@@ -17,6 +17,7 @@ export default function Home() {
         <Test2Component />
         <GhostComponent />
         <CounterComponent />
+        <DownloadComponent />
         <Image
           className="dark:invert"
           src="/next.svg"
@@ -232,4 +233,33 @@ function CounterComponent() {
   if (error) return <p>Error loading event stream: {error.message}</p>;
 
   return <p>Streamed value: {value}</p>;
+}
+
+function DownloadComponent() {
+  const { data, error, loading } = useApiClient({
+    call: ExoticEndpointsClient.getFile,
+    deps: [],
+  });
+
+  if (loading) return <p>Loading file...</p>;
+  if (error) return <p>Error loading file: {error.message}</p>;
+  if (!data) return <p>No file data.</p>;
+
+  const blob = new Blob([data], { type: "text/plain" });
+  const url = URL.createObjectURL(blob);
+
+  return (
+    <div>
+      <a
+        href={url}
+        download="hello.txt"
+        className="text-blue-500 underline"
+        onClick={() => {
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }}
+      >
+        Download File
+      </a>
+    </div>
+  );
 }
