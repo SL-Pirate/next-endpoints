@@ -1,10 +1,21 @@
 import { ClassDeclaration, SourceFile } from "ts-morph";
 import { project } from "./const.js";
+import { config } from "./config.js";
 
 export function findAnnotatedClasses() {
   const results: Array<{ klass: ClassDeclaration; src: SourceFile }> = [];
 
-  project.getSourceFiles().forEach((sf) => {
+  let  srcFiles: Array<SourceFile>;
+
+  if (config["next-endpoints"]?.endpointDir) {
+    srcFiles = project.getSourceFiles(
+      `${config["next-endpoints"]?.endpointDir}/**/*.ts`,
+    );
+  } else {
+    srcFiles = project.getSourceFiles();
+  }
+
+  srcFiles.forEach((sf) => {
     sf.getClasses().forEach((cls) => {
       cls.getDecorators().forEach((dec) => {
         if (dec.getName() === "Endpoint") {

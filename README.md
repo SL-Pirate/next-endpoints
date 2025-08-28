@@ -62,21 +62,26 @@ console.log(names); // ["Alice", "Bob", "Charlie"]
 
 ### ⚙️ Configuration
 
-Add a next-endpoints section to your package.json (optional):
+You can optionally add a next-endpoints section to your package.json to customize how the CLI generates files:
 
 ```json
 {
   "next-endpoints": {
-    "outDir": "lib/api-client"
+    "outDir": "lib/api/generated",
+    "apiPrefix": "api/generated",
+    "endpointDir": "endpoints"
   }
 }
 ```
 
-#### Defaults:
+| Option       | 	Default        | 	Description                          |
+|--------------|-----------------|---------------------------------------|
+| outDir	      | lib/api-client  | 	Directory for generated client files |
+| apiPrefix    | 	api/generated	 | Base path for API routes              |
+| endpointDir	 | project root    | 	Folder to scan for @Endpoint classes |
 
-- API routes → /app/api/generated/...
-
-- API clients → /lib/api-client
+This lets you organize your endpoints and generated clients however you like while keeping everything type-safe and
+consistent.
 
 ### ✨ Optional React Hook
 

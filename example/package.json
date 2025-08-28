@@ -9,7 +9,8 @@
   },
   "next-endpoints": {
     "outDir": "lib/api/generated",
-    "apiPrefix": "api/generated"
+    "apiPrefix": "api/generated",
+    "endpointDir": "endpoints"
   },
   "dependencies": {
     "next": "15.5.2",

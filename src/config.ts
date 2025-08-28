@@ -4,6 +4,7 @@ function readConfig(): {
   "next-endpoints"?: {
     outDir?: string;
     apiPrefix?: string;
+    endpointDir?: string;
   };
 } {
   const config = readFileSync("package.json").toString();
