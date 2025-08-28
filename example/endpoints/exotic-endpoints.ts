@@ -18,4 +18,8 @@ export class ExoticEndpoints {
         },
       });
     };
+
+  getFile: ApiMethod<void, Buffer> = async () => {
+    return Buffer.from("Hello, world!");
+  }
 }

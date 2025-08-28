@@ -105,7 +105,14 @@ export async function generateApiClient(args: {
               }
             });
             `;
-          } else {
+          }
+          else if (returnType.isString()) {
+            return "return res.text()";
+          }
+          else if (returnType.getText().includes("Buffer")) {
+            return "return res.arrayBuffer().then(buf => Buffer.from(buf))";
+          }
+          else {
             return "return res.json()";
           }
         }
