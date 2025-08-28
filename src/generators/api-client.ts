@@ -19,25 +19,6 @@ export async function generateApiClient(args: {
 
   const src = project.createSourceFile(outputPath, "", { overwrite: true });
 
-  // args.src
-  //   .getImportDeclarations()
-  //   .filter((def) => !def.getModuleSpecifierValue().includes("next-endpoints"))
-  //   .forEach((def) => {
-  //     src.addImportDeclaration({
-  //       namedImports: def.getNamedImports().map((ni) => ni.getText()),
-  //       moduleSpecifier: path.relative(
-  //         path.dirname(outputPath),
-  //         def.getModuleSpecifierValue().startsWith(".")
-  //           ? def.getModuleSpecifierValue()
-  //           : path.resolve(
-  //               process.cwd(),
-  //               "node_modules",
-  //               def.getModuleSpecifierValue(),
-  //             ),
-  //       ),
-  //     });
-  //   });
-
   console.log("Generating API Client:", outputPath);
 
   src.addClass({

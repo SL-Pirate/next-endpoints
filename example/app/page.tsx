@@ -3,6 +3,8 @@
 import Image from "next/image";
 import { HomeEndpointClient } from "@/lib/api/generated/HomeEndpoint";
 import { useApiClient } from "next-endpoints/hooks/use-api-client";
+import { useEffect, useState } from "react";
+import { TestEndpointClient } from "@/lib/api/generated/TestEndpoint";
 
 export default function Home() {
   return (
@@ -10,6 +12,7 @@ export default function Home() {
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
         <NameListComponent />
         <CreateFileComponent />
+        <TestComponent />
         <Image
           className="dark:invert"
           src="/next.svg"
@@ -151,4 +154,16 @@ function CreateFileComponent() {
   if (!data) return <p>No response from createTrouble.</p>;
 
   return <p>File creation response: {data.message}</p>;
+}
+
+function TestComponent() {
+  const [data, setData] = useState<"Pass" | "Fail">();
+
+  useEffect(() => {
+    TestEndpointClient.fetchTests({ title: "Some Test" }).then((res) =>
+      setData(res.status),
+    );
+  }, []);
+
+  return <div>{data ? `Test status: ${data}` : "Loading test status..."}</div>;
 }
