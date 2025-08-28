@@ -12,6 +12,10 @@ export class HomeEndpointClient {
                     body: JSON.stringify(args),
                   });
                   
+                  if (!res.ok) {
+                    throw new Error(JSON.stringify(await res.json()));
+                  }
+                  
                   return res.json();
               
     }
@@ -28,6 +32,10 @@ export class HomeEndpointClient {
                     },
                     body: JSON.stringify(args),
                   });
+                  
+                  if (!res.ok) {
+                    throw new Error(JSON.stringify(await res.json()));
+                  }
                   
                   return res.json();
               

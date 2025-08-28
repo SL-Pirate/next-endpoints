@@ -1,26 +1,38 @@
 {
   "name": "next-endpoints",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Never write a fetch call again",
   "license": "MIT",
   "author": "Isira Herath",
   "type": "module",
-  "main": "dist/index.js",
   "repository": "https://github.com/SL-Pirate/next-endpoints",
   "scripts": {
     "build": "tsc",
     "test": "tsc && cd example && npx next-endpoints generate"
   },
-  "types": "dist/index.d.ts",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./dist/index.js",
-    "./types": "./dist/types.js",
-    "./hooks/use-api-client": "./dist/hooks/use-api-client.js"
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./hooks/use-api-client": {
+      "import": "./dist/hooks/use-api-client.js",
+      "require": "./dist/hooks/use-api-client.js",
+      "types": "./dist/hooks/use-api-client.d.ts"
+    },
+    "./types": {
+      "import": "./dist/types.js",
+      "require": "./dist/types.js",
+      "types": "./dist/types.d.ts"
+    }
   },
   "bin": {
-    "next-endpoints": "./dist/cli.js"
-  },
-  "devDependencies": {
+    "next-endpoints": "./dist/cli.cjs"
+  },  "devDependencies": {
     "@types/node": "^24.3.0",
     "@types/react": "^19.1.12"
   },

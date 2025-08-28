@@ -49,12 +49,29 @@ export async function generateApiRoute(args: {
     parameters: [{ name: "req", type: "NextRequest" }],
     returnType: "Promise<NextResponse>",
     statements: `
+    try {
       const body = await req.json();
       const result = await new ${args.klass.getName()}().${args.prop.getName()}(
         body,
         req as any
       );
       return NextResponse.json(result);
+    } catch (err) {
+    const message =
+    err instanceof Error
+      ? err.message
+      : typeof err === "string"
+      ? err
+      : (() => {
+          try {
+            return JSON.stringify(err);
+          } catch {
+            return "Unknown error";
+          }
+        })();
+        
+      return NextResponse.json({ message }, { status: 500 });
+    }
     `,
   });
 

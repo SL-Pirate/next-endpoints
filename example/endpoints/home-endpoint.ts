@@ -7,6 +7,10 @@ export class HomeEndpoint {
   private readonly endpoint: string = "HomeEndpoint";
 
   getNames: ApiMethod<{}, Array<string>> = async (args) => {
+    if (true) {
+      throw new Error("No name error");
+    }
+
     return ["Alice", "Bob", "Charlie"];
   };
 

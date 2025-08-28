@@ -62,6 +62,10 @@ export async function generateApiClient(args: {
             body: JSON.stringify(args),
           });
           
+          if (!res.ok) {
+            throw new Error(JSON.stringify(await res.json()));
+          }
+          
           return res.json();
       `,
         };
