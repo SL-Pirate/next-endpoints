@@ -4,4 +4,4 @@ export function Endpoint(): ClassDecorator {
   return (target) => {};
 }
 
-export type ApiMethod<T, R> = (args: T, req: NextRequest) => Promise<R>;
+export type ApiMethod<Inp extends object | Array<any> | string | number , Ret> = (args: Inp, req: NextRequest) => Promise<Ret>;

@@ -6,4 +6,8 @@ export class TestEndpoint {
     async (args) => {
       return { status: "Pass" };
     };
+
+  testNo2: ApiMethod<[string, number, string], { result: string }> = async (args) => {
+    return { result: `Received: ${args}` };
+  };
 }

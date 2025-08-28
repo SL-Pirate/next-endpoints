@@ -42,6 +42,32 @@ export async function generateApiRoute(args: {
       args.src.getFilePath().replace(/\.ts$/, ""),
     ),
   });
+
+  const arrowFunc = args.prop
+    .getInitializer()
+    ?.asKind(SyntaxKind.ArrowFunction);
+
+  if (!arrowFunc) {
+    throw new Error(
+      `Property ${args.prop.getName()} in class ${args.klass.getName()} is not an arrow function`,
+    );
+  }
+
+  const inputType = arrowFunc?.getParameters()[0]?.getType();
+
+  if (!inputType) {
+    throw new Error(
+      `Could not determine input type for method ${args.prop.getName()} in class ${args.klass.getName()}`,
+    );
+  }
+
+  let body: string;
+  if (inputType.isString()) {
+    body = "await req.text()";
+  } else {
+    body = "await req.json()";
+  }
+
   src.addFunction({
     name: "POST",
     isExported: true,
@@ -50,7 +76,7 @@ export async function generateApiRoute(args: {
     returnType: "Promise<NextResponse>",
     statements: `
     try {
-      const body = await req.json();
+      const body = ${body};
       const result = await new ${args.klass.getName()}().${args.prop.getName()}(
         body,
         req as any

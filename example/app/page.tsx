@@ -13,6 +13,7 @@ export default function Home() {
         <NameListComponent />
         <CreateFileComponent />
         <TestComponent />
+        <Test2Component />
         <Image
           className="dark:invert"
           src="/next.svg"
@@ -166,4 +167,18 @@ function TestComponent() {
   }, []);
 
   return <div>{data ? `Test status: ${data}` : "Loading test status..."}</div>;
+}
+
+function Test2Component() {
+  const { data, error, loading } = useApiClient({
+    call: TestEndpointClient.testNo2,
+    args: ["3.5", 5, "cool"],
+    deps: [],
+  });
+
+  if (loading) return <p>Calling testNo2...</p>;
+  if (error) return <p>Error calling testNo2: {error.message}</p>;
+  if (!data) return <p>No response from testNo2.</p>;
+
+  return <p>testNo2 response: {data.result}</p>;
 }

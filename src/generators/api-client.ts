@@ -34,6 +34,24 @@ export async function generateApiClient(args: {
           .getInitializer()
           ?.asKind(SyntaxKind.ArrowFunction);
 
+        const inputType = arrowFunc?.getParameters()[0]?.getType();
+
+        if (!inputType) {
+          throw new Error(
+            `Could not determine input type for method ${prop.getName()} in class ${args.klass.getName()}`,
+          );
+        }
+
+        let contentTypeHeader: string;
+        let body: string;
+        if (inputType.isString()) {
+          contentTypeHeader = "text/plain";
+          body = "args";
+        } else {
+          contentTypeHeader = "application/json";
+          body = "JSON.stringify(args)";
+        }
+
         return {
           name: prop.getName(),
           isAsync: true,
@@ -56,10 +74,10 @@ export async function generateApiClient(args: {
           const res = await fetch(\`/api/generated/${args.klass.getName()}/${prop.getName()}\`, {
             method: "POST",
             headers: {
-              "Content-Type": "application/json",
+              "Content-Type": "${contentTypeHeader}",
               ...newHeaders,
             },
-            body: JSON.stringify(args),
+            body: ${body},
           });
           
           if (!res.ok) {
