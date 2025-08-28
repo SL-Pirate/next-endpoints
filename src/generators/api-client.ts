@@ -65,13 +65,13 @@ export async function generateApiClient(args: {
               return `
                 function parseFunction(chunk: string): ${dataType} {
                   if (${dataType === "string"}) {
-                    return chunk;
+                    return chunk as any;
                   } else if (${dataType === "number"}) {
-                    return Number(chunk);
+                    return Number(chunk) as any;
                   } else if (${dataType === "boolean"}) {
-                    return chunk === "true";
+                    return (chunk === "true") as any;
                   } else {
-                    return JSON.parse(chunk);
+                    return JSON.parse(chunk) as any;
                   }
                 }
               `;
