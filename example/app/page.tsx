@@ -9,6 +9,7 @@ export default function Home() {
     <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
         <NameListComponent />
+        <CreateFileComponent />
         <Image
           className="dark:invert"
           src="/next.svg"
@@ -131,4 +132,23 @@ function NameListComponent() {
       </ul>
     </div>
   );
+}
+
+function CreateFileComponent() {
+  const { data, error, loading } = useApiClient({
+    call: HomeEndpointClient.createTrouble,
+    args: {
+      path: "/tmp/test.txt",
+      data: "Hello, world!\n",
+      test: { id: 1, name: "Test" },
+    },
+    deps: [],
+    headers: { "hello-header": "hello-header-value" },
+  });
+
+  if (loading) return <p>Creating file...</p>;
+  if (error) return <p>Error creating file: {error.message}</p>;
+  if (!data) return <p>No response from createTrouble.</p>;
+
+  return <p>File creation response: {data.message}</p>;
 }
