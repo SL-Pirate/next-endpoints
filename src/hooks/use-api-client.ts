@@ -106,7 +106,7 @@ export function useApiClient<I, T>(
     return () => {
       cancelled = true;
     };
-  }, props.deps); // don’t spread, let caller control stability
+  }, props.deps || []); // don’t spread, let caller control stability
 
   return { data, error, loading };
 }
