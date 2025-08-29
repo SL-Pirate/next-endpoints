@@ -85,7 +85,7 @@ export async function generateApiRoute(args: {
       `;
     } else if (outputType?.getText().includes("Buffer")) {
       return `
-        return new NextResponse(result, {
+        return new NextResponse(result as any, {
           headers: {
             "Content-Type": "application/octet-stream",
             "Content-Length": result.length.toString(),

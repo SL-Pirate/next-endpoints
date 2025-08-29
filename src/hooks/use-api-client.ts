@@ -1,17 +1,17 @@
-// noinspection JSUnusedGlobalSymbols
-
 import { useEffect, useState } from "react";
 
 interface ITypeWithArgs<I, T> {
   call: (args: I, headers: Record<string, string>) => Promise<T>;
   args: I;
-  deps: any[];
+  deps?: any[];
+  onComplete?: (result: T) => void;
   headers?: Record<string, string>;
 }
 
 interface ITypeWithoutArgs<T> {
   call: (headers: Record<string, string>) => Promise<T>;
-  deps: any[];
+  deps?: any[];
+  onComplete?: (result: T) => void;
   headers?: Record<string, string>;
 }
 
@@ -87,6 +87,7 @@ export function useApiClient<I, T>(
       .then((res) => {
         if (!cancelled) {
           setData(res);
+          props.onComplete?.(res);
           setError(null);
         }
       })

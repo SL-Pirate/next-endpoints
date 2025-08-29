@@ -239,6 +239,8 @@ function DownloadComponent() {
   const { data, error, loading } = useApiClient({
     call: ExoticEndpointsClient.getFile,
     deps: [],
+    onComplete: (result) =>
+      console.log("File data received, size:", result.length),
   });
 
   if (loading) return <p>Loading file...</p>;
