@@ -1,7 +1,14 @@
 import { config } from "../config.js";
 import path from "node:path";
 import { project } from "../const.js";
-import { type ClassDeclaration, type SourceFile, SyntaxKind } from "ts-morph";
+import {
+  type ClassDeclaration,
+  type OptionalKind,
+  type ParameterDeclarationStructure,
+  type SourceFile,
+  SyntaxKind,
+} from "ts-morph";
+import { resolveAndAddType } from "./util.js";
 
 export async function generateApiClient(args: {
   klass: ClassDeclaration;
@@ -105,22 +112,23 @@ export async function generateApiClient(args: {
               }
             });
             `;
-          }
-          else if (returnType.isString()) {
+          } else if (returnType.isString()) {
             return "return res.text()";
-          }
-          else if (returnType.getText().includes("Buffer")) {
+          } else if (returnType.getText().includes("Buffer")) {
             return "return res.arrayBuffer().then(buf => Buffer.from(buf))";
-          }
-          else {
+          } else {
             return "return res.json()";
           }
         }
 
-        const params = [
+        const params: OptionalKind<ParameterDeclarationStructure>[] = [
           {
             name: "args",
-            type: arrowFunc?.getParameters()[0]?.getType().getText()!,
+            type: resolveAndAddType(
+              src,
+              arrowFunc?.getParameters()[0]?.getType(),
+            ),
+            hasQuestionToken: false,
           },
           {
             name: "headers",
