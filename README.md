@@ -69,7 +69,8 @@ You can optionally add a next-endpoints section to your package.json to customiz
   "next-endpoints": {
     "outDir": "lib/api/generated",
     "apiPrefix": "api/generated",
-    "endpointDir": "endpoints"
+    "endpointDir": "endpoints",
+    "basePath": "/"
   }
 }
 ```
@@ -79,6 +80,7 @@ You can optionally add a next-endpoints section to your package.json to customiz
 | outDir	      | lib/api-client  | 	Directory for generated client files |
 | apiPrefix    | 	api/generated	 | Base path for API routes              |
 | endpointDir	 | project root    | 	Folder to scan for @Endpoint classes |
+| basePath     | /               | 	Base URL for client calls            |
 
 This lets you organize your endpoints and generated clients however you like while keeping everything type-safe and
 consistent.

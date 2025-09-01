@@ -148,7 +148,7 @@ export async function generateApiClient(args: {
           statements: `
           const newHeaders = headers ? { ...headers } : {};
 
-          const res = await fetch(\`/api/generated/${args.klass.getName()}/${prop.getName()}\`, {
+          const res = await fetch(\`${config["next-endpoints"].basePath}/api/generated/${args.klass.getName()}/${prop.getName()}\`, {
             method: "POST",
             headers: {
               "Content-Type": "${contentTypeHeader}",

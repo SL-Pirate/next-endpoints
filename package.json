@@ -1,6 +1,6 @@
 {
   "name": "next-endpoints",
-  "version": "0.4.5",
+  "version": "0.5.0",
   "description": "Never write a fetch call again",
   "license": "MIT",
   "author": "Isira Herath",
