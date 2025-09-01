@@ -41,13 +41,6 @@ export async function generateApiRoute(args: {
     namedImports: ["controller"],
     moduleSpecifier: "../controller",
   });
-  src.addImportDeclaration({
-    namedImports: [args.klass.getName()!],
-    moduleSpecifier: path.relative(
-      path.dirname(outputPath),
-      args.src.getFilePath().replace(/\.ts$/, ""),
-    ),
-  });
 
   const arrowFunc = args.prop
     .getInitializer()
