@@ -19,9 +19,7 @@ export async function generateApiClient(args: {
     return;
   }
 
-  const outDir =
-    config["next-endpoints"]?.outDir ||
-    path.resolve(process.cwd(), "lib/api-client/generated");
+  const outDir = path.resolve(process.cwd(), config["next-endpoints"].outDir);
   const outputPath = path.resolve(outDir, `${args.klass.getName()}.ts`);
 
   const src = project.createSourceFile(outputPath, "", { overwrite: true });

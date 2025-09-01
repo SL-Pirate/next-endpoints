@@ -5,7 +5,8 @@ import {
   SyntaxKind,
 } from "ts-morph";
 import path from "node:path";
-import { project } from "../const.js";
+import { project } from "../../const.js";
+import { config } from "../../config.js";
 
 export async function generateApiRoute(args: {
   klass: ClassDeclaration;
@@ -22,7 +23,8 @@ export async function generateApiRoute(args: {
 
   const outputPath = path.resolve(
     process.cwd(),
-    "app/api/generated",
+    "app",
+    config["next-endpoints"].apiPrefix,
     args.klass.getName()!,
     args.prop.getName(),
     "route.ts",
@@ -34,6 +36,10 @@ export async function generateApiRoute(args: {
   src.addImportDeclaration({
     namedImports: ["NextRequest", "NextResponse"],
     moduleSpecifier: "next/server",
+  });
+  src.addImportDeclaration({
+    namedImports: ["controller"],
+    moduleSpecifier: "../controller",
   });
   src.addImportDeclaration({
     namedImports: [args.klass.getName()!],
@@ -130,7 +136,7 @@ export async function generateApiRoute(args: {
     statements: `
     try {
       const body = ${body};
-      const result = await new ${args.klass.getName()}().${args.prop.getName()}${getArgsForEndpoint()};
+      const result = await controller.${args.prop.getName()}${getArgsForEndpoint()};
       
       ${getApiResponseStatement()};
     } catch (err) {
