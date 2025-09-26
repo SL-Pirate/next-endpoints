@@ -7,6 +7,7 @@ import {
 import path from "node:path";
 import { project } from "../../const.js";
 import { config } from "../../config.js";
+import {resolveApiPath} from "../util.js";
 
 export async function generateApiRoute(args: {
   klass: ClassDeclaration;
@@ -21,12 +22,14 @@ export async function generateApiRoute(args: {
     return;
   }
 
+  const resolvedPath = resolveApiPath(args.klass.getName()!, args.prop.getName());
+
   const outputPath = path.resolve(
     process.cwd(),
     "app",
     config["next-endpoints"].apiPrefix,
-    args.klass.getName()!,
-    args.prop.getName(),
+    resolvedPath.className,
+    resolvedPath.funcName,
     "route.ts",
   );
 

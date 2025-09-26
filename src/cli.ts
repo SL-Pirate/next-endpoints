@@ -38,3 +38,8 @@ if (args[0] === "generate") {
     });
   });
 }
+
+if (args[0] === "clean") {
+    console.log("Cleaning existing generated files...");
+    cleanDirs();
+}

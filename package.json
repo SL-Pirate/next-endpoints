@@ -1,6 +1,6 @@
 {
   "name": "next-endpoints",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Never write a fetch call again",
   "license": "MIT",
   "author": "Isira Herath",
@@ -10,7 +10,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "tsc && cd example && npx next-endpoints generate"
+    "test": "tsc && cd example && pnpm next-endpoints generate"
   },
   "type": "module",
   "main": "./dist/index.cjs",
@@ -38,7 +38,8 @@
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
-    "@types/react": "^19.1.12"
+    "@types/react": "^19.1.12",
+    "typescript": "^5.9.2"
   },
   "dependencies": {
     "next": "^15.5.2",

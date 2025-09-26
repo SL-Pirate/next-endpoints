@@ -1,41 +1,75 @@
-import { SourceFile, Type } from "ts-morph";
+import {SourceFile, Type} from "ts-morph";
 
-export function resolveAndAddType(targetFile: SourceFile, type: Type|undefined): string {
-  if (!type) {
-    return "any";
-  }
+export function resolveApiPath(className: string, funcName: string) {
+    let classNamePart: string;
+    let funcNamePart: string;
 
-  const symbol = type.getSymbol();
+    // lowercasing
+    classNamePart = className.toLowerCase();
+    funcNamePart = funcName.toLowerCase();
 
-  if (symbol) {
-    const declarations = symbol.getDeclarations();
-    if (declarations.length > 0) {
-      const decl = declarations[0];
+    // stripping endpoint suffix if exists
+    classNamePart = classNamePart.replaceAll("endpoint", "")
 
-      if (!decl) {
-        return type.getText();
-      }
+    return {
+        className: classNamePart,
+        funcName: funcNamePart,
+        fullPath: `${classNamePart}/${funcNamePart}`,
+    };
+}
 
-      const declSourceFile = decl.getSourceFile();
-
-      // If type is from a different file, import it
-      if (declSourceFile.getFilePath() !== targetFile.getFilePath()) {
-        targetFile.addImportDeclaration({
-          namedImports: [symbol.getName()],
-          moduleSpecifier:
-            targetFile.getRelativePathAsModuleSpecifierTo(declSourceFile),
-        });
-      } else {
-        // If type is declared in the same source, copy the declaration
-        // Only add if not already present in target
-        if (!targetFile.getFullText().includes(symbol.getName())) {
-          targetFile.addStatements(decl.getText());
-        }
-      }
-      return symbol.getName();
+export function resolveAndAddType({sourceFile, targetFile, type}: {
+    sourceFile: SourceFile,
+    targetFile: SourceFile,
+    type: Type | undefined
+}): string {
+    if (!type) {
+        return "any";
     }
-  }
 
-  // Fallback: inline type definition
-  return type.getText();
+    // Handle inline object types directly
+    if (type.isObject() || type.getText().startsWith('{')) {
+        return type.getText();
+    }
+
+    const symbol = type.getSymbol();
+
+    if (symbol) {
+        const symbolName = symbol.getName();
+
+        // Skip internal/anonymous type names (like __type)
+        if (symbolName.startsWith('__')) {
+            return type.getText();
+        }
+
+        const declarations = symbol.getDeclarations();
+        if (declarations.length > 0) {
+            const decl = declarations[0];
+
+            if (!decl) {
+                return type.getText();
+            }
+
+            const declSourceFile = decl.getSourceFile();
+
+            // Only import if it's actually an exported symbol
+            if (declSourceFile.getFilePath() !== targetFile.getFilePath() && sourceFile.getExportSymbols().includes(symbol)) {
+                targetFile.addImportDeclaration({
+                    namedImports: [symbolName],
+                    moduleSpecifier:
+                        targetFile.getRelativePathAsModuleSpecifierTo(declSourceFile),
+                });
+                return symbolName;
+            } else if (declSourceFile.getFilePath() === targetFile.getFilePath()) {
+                // If type is declared in the same source, copy the declaration
+                if (!targetFile.getFullText().includes(symbolName)) {
+                    targetFile.addStatements(decl.getText());
+                }
+                return symbolName;
+            }
+        }
+    }
+
+    // Fallback: use the original type text
+    return type.getText();
 }

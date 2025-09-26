@@ -2,13 +2,16 @@ import { type ClassDeclaration, VariableDeclarationKind } from "ts-morph";
 import { config } from "../../config.js";
 import { project } from "../../const.js";
 import path from "node:path";
+import {resolveApiPath} from "../util.js";
 
 export async function generateControllerInstance(klass: ClassDeclaration) {
+    const resolvedPath = resolveApiPath(klass.getName()!, "")
+
   const outputPath = path.resolve(
     process.cwd(),
     "app",
     config["next-endpoints"].apiPrefix,
-    klass.getName()!,
+    resolvedPath.className,
     "controller.ts",
   );
   const file = project.createSourceFile(outputPath, "", { overwrite: true });
