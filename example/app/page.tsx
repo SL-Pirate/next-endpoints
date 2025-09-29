@@ -143,7 +143,7 @@ function NameListComponent() {
 }
 
 function CreateFileComponent() {
-  const { data, error, loading } = useApiClient({
+  const { data, error, loading, update } = useApiClient({
     call: HomeEndpointClient.createTrouble,
     args: {
       path: "/tmp/test.txt",
@@ -158,33 +158,57 @@ function CreateFileComponent() {
   if (error) return <p>Error creating file: {error.message}</p>;
   if (!data) return <p>No response from createTrouble.</p>;
 
-  return <p>File creation response: {data.message}</p>;
+  return (
+    <div>
+      <p>File creation response: {data.message}</p>;
+      <button
+        className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        onClick={() => update({ message: "File creation response: Reset" })}
+      >
+        Reset
+      </button>
+    </div>
+  );
 }
 
 function TestComponent() {
   const [data, setData] = useState<"Pass" | "Fail">();
 
   useEffect(() => {
-    TestEndpointClient.fetchTests({ title: "Some Test" }).then((res) =>
-      setData(res.status),
-    );
+    TestEndpointClient.fetchTests({
+      title: "Some Test",
+      id: 1,
+      name: "Some Test",
+    }).then((res) => setData(res.status));
   }, []);
 
   return <div>{data ? `Test status: ${data}` : "Loading test status..."}</div>;
 }
 
 function Test2Component() {
+  const [invoked, setInvoked] = useState(false);
+
   const { data, error, loading } = useApiClient({
     call: TestEndpointClient.testNo2,
     args: ["3.5", 5, "cool"],
-    deps: [],
+    deps: [invoked],
   });
 
   if (loading) return <p>Calling testNo2...</p>;
   if (error) return <p>Error calling testNo2: {error.message}</p>;
   if (!data) return <p>No response from testNo2.</p>;
 
-  return <p>testNo2 response: {data.result}</p>;
+  return (
+    <div className="flex flex-col items-center">
+      <p>testNo2 response: {data.result}</p>;
+      <button
+        className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        onClick={() => setInvoked(!invoked)}
+      >
+        Re-invoke testNo2
+      </button>
+    </div>
+  );
 }
 
 function GhostComponent() {
@@ -199,7 +223,7 @@ function GhostComponent() {
 }
 
 function CounterComponent() {
-  const { loading, error, data } = useApiClient({
+  const { loading, error, data, refresh } = useApiClient({
     call: ExoticEndpointsClient.getEventStream,
     deps: [],
   });
@@ -216,12 +240,17 @@ function CounterComponent() {
     async function pump() {
       while (!cancelled) {
         const { done, value } = await reader.read();
+
+        if (value && value.count > 10) {
+          refresh();
+        }
+
         if (done) break;
         setValue(value.count);
       }
     }
 
-    pump();
+    pump().then();
 
     return () => {
       cancelled = true;
