@@ -1,24 +1,26 @@
-import { useEffect, useState } from "react";
+import {useEffect, useState} from "react";
 
 interface ITypeWithArgs<I, T> {
-  call: (args: I, headers: Record<string, string>) => Promise<T>;
-  args: I;
-  deps?: any[];
-  onComplete?: (result: T) => void;
-  headers?: Record<string, string>;
+    call: (args: I, headers: Record<string, string>) => Promise<T>;
+    args: I;
+    deps?: any[];
+    onComplete?: (result: T) => void;
+    headers?: Record<string, string>;
 }
 
 interface ITypeWithoutArgs<T> {
-  call: (headers: Record<string, string>) => Promise<T>;
-  deps?: any[];
-  onComplete?: (result: T) => void;
-  headers?: Record<string, string>;
+    call: (headers: Record<string, string>) => Promise<T>;
+    deps?: any[];
+    onComplete?: (result: T) => void;
+    headers?: Record<string, string>;
 }
 
 interface IReturnType<T> {
-  data: T | null;
-  error: Error | null;
-  loading: boolean;
+    data: T | null;
+    error: Error | null;
+    loading: boolean;
+    refresh: () => void;
+    update: (data: T) => void;
 }
 
 export function useApiClient<I, T>(props: ITypeWithArgs<I, T>): IReturnType<T>;
@@ -47,7 +49,9 @@ export function useApiClient<I, T>(props: ITypeWithoutArgs<T>): IReturnType<T>;
  * @returns {{
  *   data: T | null,
  *   error: Error | null,
- *   loading: boolean
+ *   loading: boolean,
+ *   refresh: () => void,
+ *   update: (data: T) => void
  * }}
  *   - `data`: The resolved response from the API call (or `null` if not loaded/error).
  *   - `error`: The error if the request failed (always normalized to `Error`), or `null`.
@@ -62,51 +66,52 @@ export function useApiClient<I, T>(props: ITypeWithoutArgs<T>): IReturnType<T>;
  * });
  */
 export function useApiClient<I, T>(
-  props: ITypeWithArgs<I, T> | ITypeWithoutArgs<T>,
-): {
-  data: T | null;
-  error: Error | null;
-  loading: boolean;
-} {
-  const [data, setData] = useState<T | null>(null);
-  const [error, setError] = useState<Error | null>(null);
-  const [loading, setLoading] = useState(false);
+    props: ITypeWithArgs<I, T> | ITypeWithoutArgs<T>,
+): IReturnType<T> {
+    const [data, setData] = useState<T | null>(null);
+    const [error, setError] = useState<Error | null>(null);
+    const [loading, setLoading] = useState(false);
+    const [signal, setSignal] = useState(0);
 
-  useEffect(() => {
-    let cancelled = false; // prevent race conditions + unmounted state updates
-    setLoading(true);
+    useEffect(() => {
+        let cancelled = false; // prevent race conditions + unmounted state updates
+        setLoading(true);
 
-    let res: Promise<T>;
-    if ("args" in props) {
-      res = props.call(props.args, props.headers ?? {});
-    } else {
-      res = props.call(props.headers ?? {});
+        let res: Promise<T>;
+        if ("args" in props) {
+            res = props.call(props.args, props.headers ?? {});
+        } else {
+            res = props.call(props.headers ?? {});
+        }
+
+        res
+            .then((res) => {
+                if (!cancelled) {
+                    setData(res);
+                    props.onComplete?.(res);
+                    setError(null);
+                }
+            })
+            .catch((err) => {
+                if (!cancelled) {
+                    setError(err instanceof Error ? err : new Error(String(err)));
+                    setData(null);
+                }
+            })
+            .finally(() => {
+                if (!cancelled) {
+                    setLoading(false);
+                }
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, props.deps || []); // don’t spread, let caller control stability
+
+    return {
+        data, error, loading, refresh: () => {
+            setSignal((s) => s + 1);
+        }, update: setData
     }
-
-    res
-      .then((res) => {
-        if (!cancelled) {
-          setData(res);
-          props.onComplete?.(res);
-          setError(null);
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) {
-          setError(err instanceof Error ? err : new Error(String(err)));
-          setData(null);
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, props.deps || []); // don’t spread, let caller control stability
-
-  return { data, error, loading };
 }
