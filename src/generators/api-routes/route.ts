@@ -7,7 +7,7 @@ import {
 import path from "node:path";
 import { project } from "../../const.js";
 import { config } from "../../config.js";
-import {resolveApiPath} from "../util.js";
+import { resolveApiPath } from "../util.js";
 
 export async function generateApiRoute(args: {
   klass: ClassDeclaration;
@@ -22,7 +22,10 @@ export async function generateApiRoute(args: {
     return;
   }
 
-  const resolvedPath = resolveApiPath(args.klass.getName()!, args.prop.getName());
+  const resolvedPath = resolveApiPath(
+    args.klass.getName()!,
+    args.prop.getName(),
+  );
 
   const outputPath = path.resolve(
     process.cwd(),
@@ -98,11 +101,14 @@ export async function generateApiRoute(args: {
       outputType?.isNumber() ||
       outputType?.isBoolean() ||
       outputType?.isObject() ||
-      outputType?.isArray()
+      outputType?.isArray() ||
+      outputType?.isUnion()
     ) {
       return "return NextResponse.json(result)";
     } else if (outputType?.isVoid()) {
       return "return new NextResponse(null, { status: 204 })";
+    } else {
+      return "return new NextResponse(result.toString())";
     }
   }
 
@@ -111,8 +117,7 @@ export async function generateApiRoute(args: {
     body = "await req.text()";
   } else if (inputType.getText().includes("Buffer")) {
     body = "Buffer.from(await req.arrayBuffer())";
-  }
-  else {
+  } else {
     body = "await req.json()";
   }
 
