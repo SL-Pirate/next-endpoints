@@ -174,13 +174,21 @@ function CreateFileComponent() {
 
 function TestComponent() {
   const [data, setData] = useState<"Pass" | "Fail">();
+  const testHeaderKey = "x-test-header";
+  const headers: Record<string, string> = { "x-test-header": "Original Value" };
 
   useEffect(() => {
-    TestEndpointClient.fetchTests({
-      title: "Some Test",
-      id: 1,
-      name: "Some Test",
-    }).then((res) => setData(res.status));
+    TestEndpointClient.fetchTests(
+      {
+        title: "Some Test",
+        id: 1,
+        name: "Some Test",
+      },
+      headers,
+    ).then((res) => {
+      setData(res.status);
+      console.log("new header value", headers[testHeaderKey]);
+    });
   }, []);
 
   return <div>{data ? `Test status: ${data}` : "Loading test status..."}</div>;
@@ -306,7 +314,7 @@ function FileUploadComponent() {
       const fileBuffer = Buffer.from(await file.arrayBuffer());
 
       return ExoticEndpointsClient.uploadFile(fileBuffer, (uploaded, total) => {
-        console.log('Uploaded', uploaded, 'of', total);
+        console.log("Uploaded", uploaded, "of", total);
       });
     },
     deps: [file],

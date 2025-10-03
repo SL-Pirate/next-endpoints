@@ -85,6 +85,14 @@ You can optionally add a next-endpoints section to your package.json to customiz
 This lets you organize your endpoints and generated clients however you like while keeping everything type-safe and
 consistent.
 
+### ⚡ Two-Way Header Binding
+
+Sending custom headers from the client to your API endpoint is simple. Just pass an object containing your headers as the second argument to the generated client method. On the endpoint side, accept the req (API request) as the second argument in your ApiMethod function.
+
+Receiving headers from the endpoint back to the client requires a slightly different approach. You need to set the headers directly on the request object. While this may seem unconventional, it’s designed to keep your endpoint methods clean and focused on their main logic.
+
+Important: Only headers that start with x- will be forwarded to the client. Any other headers will be ignored.
+
 ### ✨ Optional React Hook
 
 For convenience, we provide a simple React hook useApiClient to wrap your API client calls with built-in loading, error,

@@ -3,9 +3,8 @@ import { IReturnType, ITestType } from "@/endpoints/types";
 
 @Endpoint()
 export class TestEndpoint {
-  fetchTests: ApiMethod<ITestType, { status: "Pass" | "Fail" }> = async (
-    args,
-  ) => {
+  fetchTests: ApiMethod<ITestType, { status: "Pass" | "Fail" }> = async (args, req) => {
+      req.headers.set('X-Test-Header', 'TestValue');
     return { status: "Pass" };
   };
 

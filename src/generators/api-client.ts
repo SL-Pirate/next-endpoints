@@ -204,7 +204,7 @@ export async function generateApiClient(args: {
                 };
               }
               
-              xhr.send(args as any);
+              xhr.send(args as any)
             });
             
             if (!res.ok) {
@@ -221,6 +221,15 @@ export async function generateApiClient(args: {
           isStatic: true,
           statements: `
             ${isBufferInput ? generateXhrClient() : generateFetchClient()}
+            
+            const resHeaders = res.headers;
+            for (const pair of resHeaders.entries()) {
+              const [key, value] = pair;
+              if (headers) {
+                headers[key] = value;
+              }
+            }
+            
             ${getReturn()}
           `,
         };

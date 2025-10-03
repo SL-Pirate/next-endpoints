@@ -17,6 +17,15 @@ export class HomeEndpointClient {
                       throw new Error(JSON.stringify(await res.json()));
                     }
                   
+                    
+                    const resHeaders = res.headers;
+                    for (const pair of resHeaders.entries()) {
+                      const [key, value] = pair;
+                      if (headers) {
+                        headers[key] = value;
+                      }
+                    }
+                    
                     return res.json()
                   
     }
@@ -39,6 +48,15 @@ export class HomeEndpointClient {
                       throw new Error(JSON.stringify(await res.json()));
                     }
                   
+                    
+                    const resHeaders = res.headers;
+                    for (const pair of resHeaders.entries()) {
+                      const [key, value] = pair;
+                      if (headers) {
+                        headers[key] = value;
+                      }
+                    }
+                    
                     return res.json()
                   
     }

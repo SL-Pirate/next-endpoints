@@ -63,7 +63,16 @@ export async function generateApiRoute(args: {
 
   function getApiResponseStatement() {
     if (outputType?.isString()) {
-      return "return new NextResponse(result)";
+      return `
+        const xHeaders: Record<string, string> = {};
+        for (const [key, value] of req.headers.entries()) {
+          if (key.startsWith("x-") || key.startsWith("X-")) {
+            xHeaders[key] = value;
+          }
+        }
+        
+        return new NextResponse(result, { headers: xHeaders })
+      `;
     } else if (outputType?.getText().includes("ReadableStream")) {
       return `
         function toString(chunk: string | number | boolean | object | Array<any> ): string {
@@ -76,26 +85,41 @@ export async function generateApiRoute(args: {
           }
         }
       
-        return new NextResponse(result.pipeThrough(
-              new TransformStream({
-                transform: (chunk, controller) => controller.enqueue("data: " + toString(chunk) + "\\n\\n")
-              })
-            ), {
-          headers: {
+        const resHeaders: Record<string, string> = {
             "Content-Type": "text/event-stream",
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
-          },
-        })
+          };
+
+        for (const [key, value] of req.headers.entries()) {
+          if (key.startsWith("x-") || key.startsWith("X-")) {
+            resHeaders[key] = value;
+          }
+        }
+
+        return new NextResponse(
+          result.pipeThrough(
+            new TransformStream({
+              transform: (chunk, controller) => controller.enqueue("data: " + toString(chunk) + "\\n\\n")
+            })
+          ), 
+          { headers: resHeaders }
+        )
       `;
     } else if (outputType?.getText().includes("Buffer")) {
       return `
-        return new NextResponse(result as any, {
-          headers: {
+        const xHeaders: Record<string, string> = {
             "Content-Type": "application/octet-stream",
             "Content-Length": result.length.toString(),
-          },
-        })
+          };
+
+        for (const [key, value] of req.headers.entries()) {
+          if (key.startsWith("x-") || key.startsWith("X-")) {
+            xHeaders[key] = value;
+          }
+        }
+
+        return new NextResponse(result as any, { headers: xHeaders })
       `;
     } else if (
       outputType?.isNumber() ||
@@ -104,11 +128,39 @@ export async function generateApiRoute(args: {
       outputType?.isArray() ||
       outputType?.isUnion()
     ) {
-      return "return NextResponse.json(result)";
+      return `
+        const xHeaders: Record<string, string> = {};
+        for (const [key, value] of req.headers.entries()) {
+          if (key.startsWith("x-") || key.startsWith("X-")) {
+              xHeaders[key] = value;
+          }
+        }
+      
+        return NextResponse.json(result, { headers: xHeaders })
+      `;
     } else if (outputType?.isVoid()) {
-      return "return new NextResponse(null, { status: 204 })";
+      return `
+        const xHeaders: Record<string, string> = {};
+        for (const [key, value] of req.headers.entries()) {
+          if (key.startsWith("x-") || key.startsWith("X-")) {
+            xHeaders[key] = value;
+          }
+        }
+        
+        return new NextResponse(null, { status: 204, headers: xHeaders });
+      `;
     } else {
-      return "return new NextResponse(result.toString())";
+      // return "return new NextResponse(result.toString())";
+      `
+        const xHeaders: Record<string, string> = {};
+        for (const [key, value] of req.headers.entries()) {
+          if (key.startsWith("x-") || key.startsWith("X-")) {
+            xHeaders[key] = value;
+          }
+        }
+        
+        return new NextResponse(result.toString(), {headers: xHeaders})
+      `;
     }
   }
 
@@ -144,18 +196,18 @@ export async function generateApiRoute(args: {
       
       ${getApiResponseStatement()};
     } catch (err) {
-    const message =
-    err instanceof Error
-      ? err.message
-      : typeof err === "string"
-      ? err
-      : (() => {
-          try {
-            return JSON.stringify(err);
-          } catch {
-            return "Unknown error";
-          }
-        })();
+      const message =
+        err instanceof Error
+          ? err.message
+          : typeof err === "string"
+          ? err
+          : (() => {
+              try {
+                return JSON.stringify(err);
+              } catch {
+                return "Unknown error";
+              }
+            })();
         
       return NextResponse.json({ message }, { status: 500 });
     }
