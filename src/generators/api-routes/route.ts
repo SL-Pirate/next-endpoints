@@ -174,10 +174,8 @@ export async function generateApiRoute(args: {
   }
 
   function getArgsForEndpoint() {
-    if (!inputType) {
+    if (!inputType || inputType.isVoid()) {
       return "(undefined, req as any)";
-    } else if (inputType.isVoid()) {
-      return "(void, req as any)";
     } else {
       return "(body, req as any)";
     }
