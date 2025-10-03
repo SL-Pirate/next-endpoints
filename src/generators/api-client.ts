@@ -1,73 +1,74 @@
-import {config} from "../config.js";
+import { config } from "../config.js";
 import path from "node:path";
-import {project} from "../const.js";
+import { project } from "../const.js";
 import {
-    type ClassDeclaration,
-    type OptionalKind,
-    type ParameterDeclarationStructure,
-    type SourceFile,
-    SyntaxKind,
+  type ClassDeclaration,
+  type OptionalKind,
+  type ParameterDeclarationStructure,
+  type SourceFile,
+  SyntaxKind,
 } from "ts-morph";
-import {resolveAndAddType, resolveApiPath} from "./util.js";
+import { resolveAndAddType, resolveApiPath } from "./util.js";
 
 export async function generateApiClient(args: {
-    klass: ClassDeclaration;
-    src: SourceFile;
+  klass: ClassDeclaration;
+  src: SourceFile;
 }) {
-    if (!args.klass.getName()) {
-        console.warn("Skipping class with no name");
-        return;
-    }
+  if (!args.klass.getName()) {
+    console.warn("Skipping class with no name");
+    return;
+  }
 
-    const outDir = path.resolve(process.cwd(), config["next-endpoints"].outDir);
-    const outputPath = path.resolve(outDir, `${args.klass.getName()}.ts`);
+  const outDir = path.resolve(process.cwd(), config["next-endpoints"].outDir);
+  const outputPath = path.resolve(outDir, `${args.klass.getName()}.ts`);
 
-    const target = project.createSourceFile(outputPath, "", {overwrite: true});
+  const target = project.createSourceFile(outputPath, "", { overwrite: true });
 
-    console.log("Generating API Client:", outputPath);
+  console.log("Generating API Client:", outputPath);
 
-    target.addClass({
-        name: args.klass.getName()! + "Client",
-        isExported: true,
-        methods: args.klass
-            .getProperties()
-            .filter(
-                (prop) => prop.getInitializer()?.getKind() === SyntaxKind.ArrowFunction,
-            )
-            .map((prop) => {
-                const arrowFunc = prop
-                    .getInitializer()
-                    ?.asKind(SyntaxKind.ArrowFunction);
+  target.addClass({
+    name: args.klass.getName()! + "Client",
+    isExported: true,
+    methods: args.klass
+      .getProperties()
+      .filter(
+        (prop) => prop.getInitializer()?.getKind() === SyntaxKind.ArrowFunction,
+      )
+      .map((prop) => {
+        const arrowFunc = prop
+          .getInitializer()
+          ?.asKind(SyntaxKind.ArrowFunction);
 
-                const inputType = arrowFunc?.getParameters()[0]?.getType();
+        const inputType = arrowFunc?.getParameters()[0]?.getType();
+        const isBufferInput = inputType?.getText().includes("Buffer");
 
-                let contentTypeHeader: string;
-                let body: string;
+        let contentTypeHeader: string;
+        let body: string;
 
-                if (!inputType) {
-                    contentTypeHeader = "text/plain";
-                    body = '""';
-                } else if (inputType.isString()) {
-                    contentTypeHeader = "text/plain";
-                    body = "args";
-                } else if (inputType.isVoid()) {
-                    contentTypeHeader = "text/plain";
-                    body = '""';
-                } else {
-                    contentTypeHeader = "application/json";
-                    body = "JSON.stringify(args)";
-                }
+        if (!inputType) {
+          contentTypeHeader = "text/plain";
+          body = '""';
+        } else if (inputType.isString()) {
+          contentTypeHeader = "text/plain";
+          body = "args";
+        } else if (inputType.isVoid()) {
+          contentTypeHeader = "text/plain";
+          body = '""';
+        } else {
+          contentTypeHeader = "application/json";
+          body = "JSON.stringify(args)";
+        }
 
-                function getReturn() {
-                    const returnType = arrowFunc?.getReturnType().getTypeArguments()[0];
-                    if (!returnType) {
-                        return "Promise<any>";
-                    } else if (returnType.isVoid()) {
-                        return "";
-                    } else if (returnType.getText().includes("ReadableStream")) {
-                        function getParseFunction(): string {
-                            const dataType = returnType?.getTypeArguments()[0]?.getText();
-                            return `
+        function getReturn() {
+          const returnType = arrowFunc?.getReturnType().getTypeArguments()[0];
+          if (!returnType) {
+            return "Promise<any>";
+          } else if (returnType.isVoid()) {
+            return "";
+          } else if (returnType.getText().includes("ReadableStream")) {
+            function getParseFunction(): string {
+              const dataType = returnType?.getTypeArguments()[0]?.getText();
+              return `
                 function parseFunction(chunk: string): ${dataType} {
                   if (${dataType === "string"}) {
                     return chunk as any;
@@ -80,9 +81,9 @@ export async function generateApiClient(args: {
                   }
                 }
               `;
-                        }
+            }
 
-                        return `
+            return `
             return new ReadableStream({
               async start(controller) {
                 const reader = res.body!.getReader();
@@ -110,64 +111,121 @@ export async function generateApiClient(args: {
               }
             });
             `;
-                    } else if (returnType.isString()) {
-                        return "return res.text()";
-                    } else if (returnType.getText().includes("Buffer")) {
-                        return "return res.arrayBuffer().then(buf => Buffer.from(buf))";
-                    } else {
-                        return "return res.json()";
-                    }
-                }
-
-                const params: OptionalKind<ParameterDeclarationStructure>[] = [
-                    {
-                        name: "args",
-                        type: resolveAndAddType({
-                                sourceFile: args.src,
-                                targetFile: target,
-                                type: arrowFunc?.getParameters()[0]?.getType(),
-                            }
-                        ),
-                        hasQuestionToken: false,
-                    },
-                    {
-                        name: "headers",
-                        type: "Record<string, string>",
-                        hasQuestionToken: true,
-                    },
-                ];
-
-                if (!inputType || inputType.isVoid()) {
-                    params.shift();
-                }
-
-                return {
-                    name: prop.getName(),
-                    isAsync: true,
-                    parameters: params,
-                    returnType: arrowFunc?.getReturnType()?.getText() || "Promise<any>",
-                    isStatic: true,
-                    statements: `
-          const newHeaders = headers ? { ...headers } : {};
-
-          const res = await fetch(\`${config["next-endpoints"].basePath}/api/generated/${resolveApiPath(args.klass.getName()!, prop.getName()).fullPath}\`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "${contentTypeHeader}",
-              ...newHeaders,
-            },
-            body: ${body},
-          });
-          
-          if (!res.ok) {
-            throw new Error(JSON.stringify(await res.json()));
+          } else if (returnType.isString()) {
+            return "return res.text()";
+          } else if (returnType.getText().includes("Buffer")) {
+            return "return res.arrayBuffer().then(buf => Buffer.from(buf))";
+          } else {
+            return "return res.json()";
           }
-          
-          ${getReturn()}
-      `,
-                };
-            }),
-    });
+        }
 
-    await target.save();
+        const params: OptionalKind<ParameterDeclarationStructure>[] = [
+          {
+            name: "args",
+            type: resolveAndAddType({
+              sourceFile: args.src,
+              targetFile: target,
+              type: arrowFunc?.getParameters()[0]?.getType(),
+            }),
+            hasQuestionToken: false,
+          },
+        ];
+
+        // if is buffer give a progress callback
+        if (isBufferInput) {
+          params.push({
+            name: "onUploadProgress",
+            type: "(uploaded: number, total: number) => void",
+            hasQuestionToken: true,
+          });
+        }
+
+        params.push({
+          name: "headers",
+          type: "Record<string, string>",
+          hasQuestionToken: true,
+        });
+
+        if (!inputType || inputType.isVoid()) {
+          params.shift();
+        }
+
+        function generateFetchClient() {
+          return `          
+            const newHeaders = headers ? { ...headers } : {};
+  
+            const res = await fetch(\`${config["next-endpoints"].basePath}/api/generated/${resolveApiPath(args.klass.getName()!, prop.getName()).fullPath}\`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "${contentTypeHeader}",
+                ...newHeaders,
+              },
+              body: ${body},
+            });
+            
+            if (!res.ok) {
+              throw new Error(JSON.stringify(await res.json()));
+            }
+          `;
+        }
+
+        function generateXhrClient() {
+          return `
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", \`${config["next-endpoints"].basePath}/api/generated/${resolveApiPath(args.klass.getName()!, prop.getName()).fullPath}\`, true);
+            
+            const newHeaders = headers ? { ...headers } : {};
+            xhr.setRequestHeader("Content-Type", "application/octet-stream");
+            for (const key in newHeaders) {
+              xhr.setRequestHeader(key, newHeaders[key]);
+            }
+            
+            const res = await new Promise<Response>((resolve, reject) => {
+              xhr.onload = () => {
+                const options = {
+                  status: xhr.status,
+                  statusText: xhr.statusText,
+                  headers: new Headers(), // Simplified; parsing all headers is more complex
+                };
+                const body = xhr.response;
+                resolve(new Response(body, options));
+              };
+              
+              xhr.onerror = () => {
+                reject(new Error("Network error"));
+              };
+              
+              if (onUploadProgress) {
+                xhr.upload.onprogress = (event) => {
+                  if (event.lengthComputable) {
+                    onUploadProgress(event.loaded, event.total);
+                  }
+                };
+              }
+              
+              xhr.send(args as any);
+            });
+            
+            if (!res.ok) {
+              throw new Error(JSON.stringify(await res.json()));
+            }
+          `;
+        }
+
+        return {
+          name: prop.getName(),
+          isAsync: true,
+          parameters: params,
+          returnType: arrowFunc?.getReturnType()?.getText() || "Promise<any>",
+          isStatic: true,
+          statements: `
+            ${isBufferInput ? generateXhrClient() : generateFetchClient()}
+            ${getReturn()}
+          `,
+        };
+      }),
+  });
+
+  await target.save();
 }

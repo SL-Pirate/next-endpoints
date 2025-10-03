@@ -5,7 +5,7 @@ export function Endpoint(): ClassDecorator {
 }
 
 export type ApiMethod<
-  Inp extends object | Array<any> | string | number | boolean | void,
+  Inp extends object | Array<any> | string | number | boolean | void | Buffer,
   Ret extends
     | object
     | Array<any>

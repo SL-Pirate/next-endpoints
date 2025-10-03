@@ -18,6 +18,7 @@ export default function Home() {
         <GhostComponent />
         <CounterComponent />
         <DownloadComponent />
+        <FileUploadComponent />
         <Image
           className="dark:invert"
           src="/next.svg"
@@ -291,6 +292,48 @@ function DownloadComponent() {
       >
         Download File
       </a>
+    </div>
+  );
+}
+
+function FileUploadComponent() {
+  const [file, setFile] = useState<File | null>(null);
+
+  const { data, error, loading, update } = useApiClient({
+    call: async () => {
+      if (!file) throw new Error("No file selected");
+
+      const fileBuffer = Buffer.from(await file.arrayBuffer());
+
+      return ExoticEndpointsClient.uploadFile(fileBuffer, (uploaded, total) => {
+        console.log('Uploaded', uploaded, 'of', total);
+      });
+    },
+    deps: [file],
+    onComplete: (result) =>
+      console.log("File upload response:", result.success),
+  });
+
+  return (
+    <div className="flex flex-col items-center">
+      <input
+        type="file"
+        onChange={(e) => {
+          if (e.target.files && e.target.files.length > 0) {
+            setFile(e.target.files[0]);
+          }
+        }}
+        className="mb-2"
+      />
+      {loading && <p>Uploading file...</p>}
+      {error && <p>Error uploading file: {error.message}</p>}
+      {data && <p>File upload successful: {data.success.toString()}</p>}
+      <button
+        className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+        onClick={() => setFile(null)}
+      >
+        Reset
+      </button>
     </div>
   );
 }

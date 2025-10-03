@@ -109,7 +109,10 @@ export async function generateApiRoute(args: {
   let body: string;
   if (!inputType || inputType.isString() || inputType.isVoid()) {
     body = "await req.text()";
-  } else {
+  } else if (inputType.getText().includes("Buffer")) {
+    body = "Buffer.from(await req.arrayBuffer())";
+  }
+  else {
     body = "await req.json()";
   }
 

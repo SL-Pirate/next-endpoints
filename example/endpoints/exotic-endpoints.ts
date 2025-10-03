@@ -22,4 +22,10 @@ export class ExoticEndpoints {
   getFile: ApiMethod<void, Buffer> = async () => {
     return Buffer.from("Hello, world!");
   }
+
+  uploadFile: ApiMethod<Buffer, { success: boolean }> = async (file) => {
+
+    console.log("Received file of size:", file.length);
+    return { success: true };
+  };
 }
